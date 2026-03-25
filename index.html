@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nutrition System Pro</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #000;
+    color: #d1fae5;
+}
+
+/* HEADER */
+.header {
+    background: #022c22;
+    padding: 15px;
+    text-align: center;
+    color: #22c55e;
+    font-weight: bold;
+}
+
+/* MAIN CONTENT */
+.container {
+    padding: 15px;
+}
+
+/* BOX */
+.box {
+    background: #064e3b;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+/* INPUT */
+input, select, button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 6px;
+    border: none;
+}
+
+/* BUTTON */
+button {
+    background: #16a34a;
+    color: white;
+    font-weight: bold;
+}
+
+/* REPORT */
+.report {
+    background: #011d17;
+    padding: 10px;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+/* ANALYTICS */
+.analytics-card {
+    background: #011d17;
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+/* BOTTOM NAV */
+.navbar {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    background: #022c22;
+}
+
+.navbar div {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    color: #22c55e;
+}
+
+/* HIDE */
+.hidden { display: none; }
+
+</style>
+</head>
+
+<body>
+
+<div class="header">Nutrition Strip System</div>
+
+<div class="container">
+
+<!-- REGISTER -->
+<div class="box" id="registerBox">
+    <h3>Create Account</h3>
+    <input id="regName" placeholder="Name">
+    <input id="regAge" type="number" placeholder="Age">
+    <input id="regPass" type="password" placeholder="Password">
+    <button onclick="register()">Register</button>
+    <button onclick="showLogin()">Login</button>
+</div>
+
+<!-- LOGIN -->
+<div class="box hidden" id="loginBox">
+    <h3>Login</h3>
+    <input id="logName" placeholder="Name">
+    <input id="logPass" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+</div>
+
+<!-- HOME -->
+<div class="box hidden" id="homeBox">
+    <h3>Select Symptom</h3>
+    <select id="symptom">
+        <option value="">Select</option>
+        <option value="fatigue">Fatigue</option>
+        <option value="hair">Hair Fall</option>
+        <option value="pale">Pale Skin</option>
+        <option value="nails">Weak Nails</option>
+    </select>
+    <button onclick="analyze()">Analyze</button>
+
+    <div id="report" class="report"></div>
+</div>
+
+<!-- ANALYTICS -->
+<div class="box hidden" id="analyticsBox">
+    <h3>Analytics Dashboard</h3>
+    <div id="analyticsData"></div>
+</div>
+
+<!-- PROFILE -->
+<div class="box hidden" id="profileBox">
+    <h3>Profile</h3>
+    <p id="profileName"></p>
+    <p id="profileAge"></p>
+</div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="navbar hidden" id="navBar">
+    <div onclick="showPage('home')">🏠</div>
+    <div onclick="showPage('analytics')">📊</div>
+    <div onclick="showPage('profile')">👤</div>
+</div>
+
+<script>
+
+let currentUser = null;
+
+// REGISTER
+function register() {
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+
+    users.push({
+        name: regName.value,
+        age: regAge.value,
+        pass: regPass.value,
+        history: []
+    });
+
+    localStorage.setItem("users", JSON.stringify(users));
+
+    alert("Account created");
+    showLogin();
+}
+
+// LOGIN
+function login() {
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+
+    let user = users.find(u =>
+        u.name === logName.value && u.pass === logPass.value
+    );
+
+    if (!user) {
+        alert("Invalid login");
+        return;
+    }
+
+    currentUser = user;
+
+    registerBox.classList.add("hidden");
+    loginBox.classList.add("hidden");
+    homeBox.classList.remove("hidden");
+    navBar.classList.remove("hidden");
+
+    profileName.innerText = "Name: " + user.name;
+    profileAge.innerText = "Age: " + user.age;
+
+    loadAnalytics();
+}
+
+// ANALYZE
+function analyze() {
+    let symptom = document.getElementById("symptom").value;
+
+    let data = {
+        fatigue: ["B12 / Iron Deficiency","B12 Test, CBC","B12 + Iron Strip"],
+        hair: ["Vitamin Deficiency","Vitamin D Test","Multivitamin Strip"],
+        pale: ["Anemia","CBC, Iron","Iron Strip"],
+        nails: ["Mineral Deficiency","Calcium Test","Calcium + Zinc"]
+    };
+
+    let r = data[symptom];
+
+    report.innerHTML = `
+        <p><b>Issue:</b> ${r[0]}</p>
+        <p><b>Test:</b> ${r[1]}</p>
+        <p><b>Strip:</b> ${r[2]}</p>
+    `;
+
+    let users = JSON.parse(localStorage.getItem("users"));
+    let u = users.find(x => x.name === currentUser.name);
+    u.history.push(symptom);
+    localStorage.setItem("users", JSON.stringify(users));
+
+    loadAnalytics();
+}
+
+// ANALYTICS
+function loadAnalytics() {
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+
+    let total = users.length;
+
+    let all = [];
+    users.forEach(u => all.push(...u.history));
+
+    let fatigue = all.filter(x=>x==="fatigue").length;
+    let hair = all.filter(x=>x==="hair").length;
+    let pale = all.filter(x=>x==="pale").length;
+    let nails = all.filter(x=>x==="nails").length;
+
+    analyticsData.innerHTML = `
+        <div class="analytics-card">Total Users: ${total}</div>
+        <div class="analytics-card">Fatigue: ${fatigue}</div>
+        <div class="analytics-card">Hair Fall: ${hair}</div>
+        <div class="analytics-card">Pale Skin: ${pale}</div>
+        <div class="analytics-card">Weak Nails: ${nails}</div>
+    `;
+}
+
+// NAVIGATION
+function showPage(page) {
+    homeBox.classList.add("hidden");
+    analyticsBox.classList.add("hidden");
+    profileBox.classList.add("hidden");
+
+    if(page==="home") homeBox.classList.remove("hidden");
+    if(page==="analytics") analyticsBox.classList.remove("hidden");
+    if(page==="profile") profileBox.classList.remove("hidden");
+}
+
+// UI SWITCH
+function showLogin() {
+    registerBox.classList.add("hidden");
+    loginBox.classList.remove("hidden");
+}
+
+</script>
+
+</body>
+</html>
